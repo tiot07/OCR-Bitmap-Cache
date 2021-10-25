@@ -7,6 +7,7 @@ import csv
 import difflib
 import time
 import logging
+from tqdm import tqdm
 logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
 
 
@@ -18,14 +19,14 @@ class ImageData():
     def process_image(self,):
         #rgb = cv2.cvtColor(denoised_img, cv2.COLOR_BGR2RGB)
         denoised_img = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
-        results = pytesseract.image_to_data(denoised_img, output_type=Output.DICT, config='--oem 2 --psm 1')
+        results = pytesseract.image_to_data(denoised_img, output_type=Output.DICT, lang="eng+jpn" ,config='')
         return results
 
 
     def process_inverted_image(self,):
         denoised_img = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
         invert_img = cv2.bitwise_not(denoised_img)
-        results = pytesseract.image_to_data(invert_img, output_type=Output.DICT, config="--oem 2 --psm 1")
+        results = pytesseract.image_to_data(invert_img, output_type=Output.DICT, lang="eng+jpn",config='')
         return results
 
 
@@ -44,9 +45,9 @@ class Result_Iter():
             text = results["text"][i]
             conf = int(results["conf"][i])
             if conf > args["min_conf"] and text != '\ufb01' and text != '':
-                print("Confidence: {}".format(conf))
-                print("Text: {}".format(text))
-                print("")
+                # print("Confidence: {}".format(conf))
+                # print("Text: {}".format(text))
+                # print("")
                 row = {}
                 row["Path"] = args["source"]
                 row["Image"] = im
@@ -55,7 +56,7 @@ class Result_Iter():
                 row["Width"] = w
                 row["Height"] = h
                 row["Confidence"] = conf
-                text = "".join([c if ord(c) < 128 else "" for c in text]).strip()
+                # text = "".join([c if ord(c) < 128 else "" for c in text]).strip()
                 row["Raw Words"] = text
                 text = ''.join(e for e in text if e.isalnum())
                 text = text.lower()
@@ -69,7 +70,7 @@ class Result_Iter():
                 if(len(res) > 2):
                     row["Closest Match 3"] = res[2]
                 cv2.rectangle(imgData.image, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                cv2.imwrite(os.path.join(args["dest"] ,"output" + str(j) +".jpg"), imgData.image)
+                cv2.imwrite(os.path.join(args["dest"] ,"output" + str(j) +".bmp"), imgData.image)
                 row["OutputImage"] = "output" + str(j) + ".jpg"
                 self.writer.writerow(row)
 
@@ -94,15 +95,15 @@ if __name__ == '__main__':
     args = vars(ap.parse_args())
     if not os.path.isdir(args["dest"]):
         os.mkdir(args["dest"])
-    with open(args["csv"],mode='w',newline='') as csv_file:
+    with open(args["csv"],mode='w',newline='',encoding='shift-jis',errors="ignore") as csv_file:
         f = open(args["wordlist"], "r")
         dictionary_words = f.read().splitlines()
         fieldnames = ['Path', 'Image', 'OutputImage','Left', 'Top', 'Width', 'Height', 'Raw Words', 'Confidence', 'Closest Match 1', 'Closest Match 2', 'Closest Match 3']
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
         writer.writeheader()
         j = 0
-        for im in os.listdir(args["source"]):
-            print("Processing image ",im, ": ", j + 1, "of ", len(os.listdir(args["source"])))
+        for im in tqdm(os.listdir(args["source"])):
+            # print("Processing image ",im, ": ", j + 1, "of ", len(os.listdir(args["source"])))
             j += 1
             img = args["source"] + "/" + im
             imgData = ImageData(img)
@@ -111,7 +112,7 @@ if __name__ == '__main__':
             writer_class = Result_Iter(writer)
             writer_class.update_csv(results)
             writer_class.update_csv(results2)
-            logging.info('Image: ' + im + " finished processing.")
+            # logging.info('Image: ' + im + " finished processing.")
 
     total_time = time.time() - start_time
     total_min = total_time / 60
