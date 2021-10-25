@@ -1,43 +1,34 @@
 # OCR-Bitmap-Cache
-RDP Bitmap Cache OCR Script to triage text in bitmap cache images.
+元のREADME: https://github.com/DFIR-Drew/OCR-Bitmap-Cache  
+デモ利用環境: Windows 11 Subsystem for linux (Ubuntu)
 
-* Needs output from ANSSI bmc-tools Python script (https://github.com/ANSSI-FR/bmc-tools)
-* Requires Python3
-
-# Installation
-1. Install python packages
+## 環境構築
 ```
-pip install pytesseract
-pip install opencv-python
-```
-2. Download [Tesseract](https://digi.bib.uni-mannheim.de/tesseract/) (version [4.0.0dev-20170510](https://digi.bib.uni-mannheim.de/tesseract/tesseract-ocr-setup-4.0.0dev-20170510.exe) tested and working)
-3. Add tesseract to User path
-
-# Usage
-```
-./ocr.py [-h] [-c MIN_CONF] -s SOURCE -d DEST -o CSV -w WORDLIST
+sudo add-apt-repository ppa:alex-p/tesseract-ocr
+sudo apt update
+sudo apt install tesseract-ocr libtesseract-dev
+sudo apt install libqt5gui5 python3-pip tesseract-ocr-jpn
+pip3 install Pillow
+pip3 install pytesseract opencv-python tqdm
 ```
 
-# Arguments
+## 使い方
+
+1. t476df-2021フォルダへ移動
+2. bitmapを抽出
 ```
--h, --help                        show this help message and exit
--c MIN_CONF, --min-conf MIN_CONF  mininum confidence value to filter weak text detection
--s SOURCE, --source SOURCE        path to image folder to be OCR'd
--d DEST, --dest DEST              folder to save OCR'd output images
--o CSV, --csv CSV                 csv output file to contain file db
--w WORDLIST, --wordlist WORDLIST  wordlist to test against OCR text
+mkdir rdp_bmp
+python3 tools/bmc-tools.py -s win2019/Users/admin/AppData/Local/Microsoft/Terminal\ Server\ Client/Cache/ -d rdp_bmp/ -v
+```
+3. OCR実行
+```
+git clone https://github.com/tiot07/OCR-Bitmap-Cache
+cd OCR-Bitmap-Cache
+mkdir ocr
+python3 ocr.py -s ../rdp_bmp -d ocr -o ocr.csv -w wordlist.txt
 ```
 
-# Outputs
-* CSV File with:
-  * Path to the original file
-  * Name of the highlighted output image
-  * Output size and location of the words located in the highlighted image
-  * Characters identified by the OCR
-  * Confidence of the characters identified
-  * Top three closest matches to the characters from the custom wordlist input
-* Highlighted Images
-
-![csv](https://user-images.githubusercontent.com/87434084/125654480-5dea216e-090b-41cf-9d34-0e5958cf6cbe.png)
-![highlighted collage](https://user-images.githubusercontent.com/87434084/125654494-30210475-af4a-4133-8b0d-2bf16dce2dde.jpg)
-![close-up collage](https://user-images.githubusercontent.com/87434084/125654506-44484372-40cc-4023-942a-c1b77055b2a4.jpg)
+4. 分析ツール起動
+```
+../tools/RdpCacheStitcher-linux64
+```
