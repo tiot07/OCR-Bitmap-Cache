@@ -1,4 +1,3 @@
 shizriku
-tee
 hostname
 admin
